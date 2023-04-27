@@ -1,0 +1,120 @@
+logdir: ./logs
+accelerator: 'gpu'
+gpus: 1
+flush_log_secs: 120
+log_every_n_steps: 10
+val_check_interval: 1.0
+
+runner:
+  base_learning_rate: 1.0e-6
+  target: inpainting.ddpm.LatentDiffusion
+  params:
+    linear_start: 0.00030
+    linear_end: 0.0200
+    log_every_t: 100
+    timesteps: 1000
+    image_size: 64
+    channels: 6
+
+    ckpt_path: ./checkpoints/ddpm-epoch=24.ckpt
+    ignore_keys:
+      - first_stage.discriminator
+    load_only_unet: False
+
+    scheduler_config:
+      target: inpainting.utils.lr_scheduler.LambdaWarmUpCosineScheduler
+      params:
+        verbosity_interval: 0
+        warm_up_steps: 1000
+        max_decay_steps: 50000
+        lr_start: 0.001
+        lr_max: 0.1
+        lr_min: 0.0001
+
+    unet_config:
+      target: inpainting.openaimodel.UNetModel
+      params:
+        image_size: 64
+        in_channels: 13
+        out_channels: 6
+        model_channels: 256
+        attention_resolutions:
+        - 8
+        - 4
+        - 2
+        num_res_blocks: 2
+        channel_mult:
+        - 1
+        - 2
+        - 3
+        - 4
+        num_heads: 8
+        resblock_updown: true
+        preproc_input: true
+
+    first_stage_config:
+      target: inpainting.first_stage.NeuralRenderer
+      params:
+        test_phase: True
+        encoder_config:
+          target: generators.style_gan_v2.Encoder
+          params:
+            image_size: 512
+            channel_multiplier: 2
+        generator_config:
+          target: generators.style_gan_v2.Generator
+          params:
+            texture_size: 256
+            output_channels: 16
+            channel_multiplier: 2
+            ainp_path:
+        compress_branch_config:
+          target: compress_models.vqmodel.VQModel
+          params:
+            embed_dim: 6
+            n_embed: 8192
+
+            ddconfig:
+              double_z: false
+              z_channels: 6
+              resolution: 256
+              in_channels: 21
+              out_ch: 21
+              ch: 64
+              ch_mult:
+                - 1
+                - 2
+                - 4
+              num_res_blocks: 2
+              attn_resolutions: []
+        rasterizer_config:
+          target: rasterizers.uv_rasterizer.Rasterizer
+          params:
+            H: 512
+            W: 512
+            faces_path: ./smplx_data/uv_faces.npy
+            vertices_values_path: ./smplx_data/uv.npy
+        renderer_config:
+          target: renderers.pix2pix.Renderer
+          params:
+            in_channels_ntex: 21
+            segm_channels: 1
+
+test_dataloader:
+  batch_size: 1
+  num_workers: 4
+  bgrd_color_mult: 1.0  # white
+
+  target: dataloaders.from_folder.FromFolder
+  params:
+    data_root: ./Dataset/SnapshotPeople
+    smplx_path: ./smplx_data/smplx_models
+    v_inds_path: ./smplx_data/v_inds.npy
+    binary_uv_map: ./smplx_data/SMPLX-mesh-neutral.png
+
+
+callbacks:
+  image_logger:
+    target: pl_callbacks.image_logger.ImageLogger
+    params:
+      batch_frequency: -1

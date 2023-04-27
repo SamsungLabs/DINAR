@@ -1,0 +1,104 @@
+logdir: ./logs
+accelerator: 'gpu'
+gpus: 1
+flush_log_secs: 120
+log_every_n_steps: 10
+val_check_interval: 1.0
+multiview: False
+
+runner:
+  target: finetune.avatar_tune.TextureTune
+  params:
+    ckpt_path: ./checkpoints/ddpm-epoch=24.ckpt
+    lr_G: 2e-3
+    lr_D: 4e-4
+    rescale_steps: 0
+
+    discriminator_config:
+      target: discriminators.style_gan_v2.Discriminator
+      params:
+        image_size: 512
+        activation_layer: 2
+        channel_multiplier: 2
+
+    rasterizer_config:
+      target: rasterizers.uv_rasterizer.Rasterizer
+      params:
+        H: 512
+        W: 512
+        faces_path: ./smplx_data/uv_faces.npy
+        vertices_values_path: ./smplx_data/uv.npy
+
+    renderer_config:
+      target: renderers.pix2pix.Renderer
+      params:
+        in_channels_ntex: 21
+        segm_channels: 1
+
+    criteria_config:
+      l2_loss:
+        target: criteria.l2_loss.L2Loss
+        params:
+          weight: 1.
+          intersection: True
+
+      perceptual_loss:
+        target: criteria.perceptual_loss.PerceptualLoss
+        params:
+          weight: 1.
+          intersection: True
+
+      adversarial_loss:
+        target: criteria.nonsaturating_loss.Adversarial
+        params:
+          weight: 0.01
+
+      r1_reg:
+        target: criteria.r1_regularization.R1Regularization
+        params:
+          weight: 0.1
+
+train_dataloaders:
+  batch_size: 4
+  num_workers: 4
+
+  data:
+    probability: 1.0
+    target: dataloaders.from_folder.FromFolder
+    params:
+      data_root: ./Dataset/SnapshotPeople
+      repeat_data: 256
+      smplx_path: ./smplx_data/smplx_models
+      v_inds_path: ./smplx_data/v_inds.npy
+      binary_uv_map: ./smplx_data/SMPLX-mesh-neutral.png
+      additive_uv_map: ./smplx_data/SMPLX-eyes-hands-mask.png
+      colored_uv_map: ./smplx_data/gradient_texture_preprocessed.png
+
+
+val_dataloaders:
+  batch_size: 1
+  num_workers: 1
+  double_val_dataloader: False
+
+  data:
+    target: dataloaders.from_folder.FromFolder
+    params:
+      data_root: ./Dataset/SnapshotPeople
+      smplx_path: ./smplx_data/smplx_models
+      v_inds_path: ./smplx_data/v_inds.npy
+      binary_uv_map: ./smplx_data/SMPLX-mesh-neutral.png
+      additive_uv_map: ./smplx_data/SMPLX-eyes-hands-mask.png
+
+callbacks:
+  image_logger:
+    target: pl_callbacks.image_logger.ImageLogger
+    params:
+      batch_frequency: 50
+
+  checkpoint_callback_last:
+    target: pytorch_lightning.callbacks.ModelCheckpoint
+    params:
+      save_top_k: 10
+      monitor: monitoring_step
+      mode: max
+      filename: last-{epoch}-{step}
