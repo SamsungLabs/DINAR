@@ -9,7 +9,7 @@ David Svitov, Dmitrii Gudkov, Renat Bashirov, Victor Lempitsky
 
 **Paper:** https://arxiv.org/abs/2303.09375 <br>
 **Project page:** https://samsunglabs.github.io/DINAR_project_page/ <br>
-**Video:** https://youtu.be/FNWgDsFJ2PY <br>
+**Video:** https://youtu.be/9zo0nDNyPn8 <br>
 
 **Abstract:**  *We present DINAR, an approach for creating realistic rigged fullbody avatars from single RGB images. Similarly to previous works, our method uses neural textures combined with the SMPL-X body model to achieve photo-realistic quality of avatars while keeping them easy to animate and fast to infer. To restore the texture, we use a latent diffusion model and show how such model can be trained in the neural texture space. The use of the diffusion model allows us to realistically reconstruct large unseen regions such as the back of a person given the frontal view. The models in our pipeline are trained using 2D images and videos only. In the experiments, our approach achieves state-of-the-art rendering quality and good generalization to new poses and viewpoints. In particular, the approach improves state-of-the-art on the SnapshotPeople public benchmark.* 
 
