@@ -85,6 +85,7 @@ dependencies:
   - zstd=1.5.0=ha95c52a_0
   - pytorch-lightning
   - pip:
+    - ninja==1.10.0
     - albumentations
     - antlr4-python3-runtime==4.8
     - anyio==3.4.0

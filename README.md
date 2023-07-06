@@ -26,6 +26,11 @@ bash docker/build.sh
 bash docker/run.sh
 ```
 It mounts root directory of the host system to `/mounted/` inside docker and sets cloned repository path as a starting directory.
+3. **Inside the container** install `minimal_pytorch_rasterizer`. (Unfortunately, docker fails to install it during image building)
+```
+pip install git+https://github.com/rmbashirov/minimal_pytorch_rasterizer
+```
+4. *(Optional)* You can then commit changes to the image so that you don't need to install  `minimal_pytorch_rasterizer` for every new container. See [docker documentation](https://docs.docker.com/engine/reference/commandline/commit/).
 
 
 ---

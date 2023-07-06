@@ -90,10 +90,11 @@ RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-py37_4.8.3-Linux
 RUN echo 112
 COPY docker/environment.yml /home/$USERNAME/environment.yml
 RUN conda env create -f /home/$USERNAME/environment.yml
-ENV PATH=/home/$USERNAME/miniconda/envs/gent_docker/bin:$PATH
 
 RUN echo "source activate gent_docker" > ~/.bashrc
 ENV PATH /opt/conda/envs/gent_docker/bin:$PATH
+
+RUN conda info --envs
 
 # python libs
 RUN pip install --upgrade pip
@@ -102,22 +103,6 @@ RUN pip install --upgrade pip
 RUN echo 1
 RUN pip install git+https://github.com/karfly/nvdiffrast_compute-capability_6.0
 RUN pip install git+https://github.com/DmitryUlyanov/yamlenv.git
-RUN pip install git+https://github.com/rmbashirov/minimal_pytorch_rasterizer
-
-RUN wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
-RUN sudo unzip ninja-linux.zip -d /usr/local/bin/
-RUN sudo update-alternatives --install /usr/bin/ninja ninja /usr/local/bin/ninja 1 --force 
-
-
-ARG ssh_prv_key
-ARG ssh_pub_key
-RUN mkdir ~/.ssh/
-RUN echo "$ssh_prv_key" > ~/.ssh/id_rsa && \
-    echo "$ssh_pub_key" > ~/.ssh/id_rsa.pub && \
-    echo "StrictHostKeyChecking no" > ~/.ssh/config && \
-    chmod 600 ~/.ssh/id_rsa && \
-    chmod 600 ~/.ssh/id_rsa.pub
-
 
 # docker setup
 WORKDIR /
